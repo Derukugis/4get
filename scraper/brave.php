@@ -210,6 +210,63 @@ class brave{
 		return $data;
 	}
 	
+	private function get_js(){
+		
+		$script_disc =
+			$this->fuckhtml
+			->getElementsByTagName(
+				"script"
+			);
+		
+		$data = null;
+		foreach($script_disc as &$discs){
+			
+			if(
+				preg_match(
+					'/kit\.start\(/',
+					$discs["innerHTML"]
+				)
+			){
+				
+				$data =
+					explode(
+						"data:",
+						$discs["innerHTML"],
+						2
+					);
+				
+				if(count($data) !== 2){
+					
+					throw new Exception("Failed to split up data field");
+				}
+				
+				$data = $data[1];
+				break;
+			}
+		}
+		
+		if($data === null){
+			
+			throw new Exception("Could not grep JavaScript object");
+		}
+		
+		$data =
+			$this->fuckhtml
+			->parseJsObject(
+				$this->fuckhtml
+				->extract_json(
+					$data
+				)
+			);
+		
+		if($data === null){
+			
+			throw new Exception("Failed to decode JavaScript object");
+		}
+		
+		return $data;
+	}
+	
 	public function web($get){
 		
 		if($get["npt"]){
@@ -382,55 +439,9 @@ class brave{
 			}
 		}
 		
+		// do some magic
 		$this->fuckhtml->load($html);
-		
-		$script_disc =
-			$this->fuckhtml
-			->getElementsByTagName(
-				"script"
-			);
-		
-		$grep = [];
-		foreach($script_disc as $discs){
-			
-			preg_match(
-				'/const data ?= ?(\[{.*}]);/',
-				$discs["innerHTML"],
-				$grep
-			);
-			
-			if(isset($grep[1])){
-				
-				break;
-			}
-		}
-		
-		if(!isset($grep[1])){
-			
-			throw new Exception("Could not grep JavaScript object");
-		}
-		
-		$data =
-			rtrim(
-				preg_replace(
-					'/\(Array\(0\)\)\).*$/',
-					"",
-					$grep[1]
-				),
-				" ]"
-			) . "]";
-		
-		$data =
-			$this->fuckhtml
-			->parseJsObject(
-				$data
-			);
-		unset($grep);
-		
-		if($data === null){
-			
-			throw new Exception("Failed to decode JavaScript object");
-		}
+		$data = $this->get_js();
 		
 		if(
 			isset($data[2]["data"]["title"]) &&
@@ -1179,23 +1190,8 @@ class brave{
 				$proxy
 			);
 		
-		preg_match(
-			'/const data ?= ?(\[{.*}]);/',
-			$html,
-			$json
-		);
-		
-		if(!isset($json[1])){
-			
-			throw new Exception("Failed to grep javascript object");
-		}
-		
-		$json = $this->fuckhtml->parseJsObject($json[1], true);
-		
-		if($json === null){
-			
-			throw new Exception("Failed to parse javascript object");
-		}
+		$this->fuckhtml->load($html);
+		$json = $this->get_js();
 		
 		foreach(
 			$json[1]["data"]["body"]["response"]["news"]["results"]
@@ -1277,22 +1273,8 @@ class brave{
 		$html = fread($handle, filesize("scraper/brave-image.html"));
 		fclose($handle);*/
 		
-		preg_match(
-			'/const data = (\[{.*}\]);/',
-			$html,
-			$json
-		);
-		
-		if(!isset($json[1])){
-			
-			throw new Exception("Failed to get data object");
-		}
-		
-		$json =
-			$this->fuckhtml
-			->parseJsObject(
-				$json[1]
-			);
+		$this->fuckhtml->load($html);
+		$json = $this->get_js();
 		
 		foreach(
 			$json[1]
@@ -1422,22 +1404,8 @@ class brave{
 		$html = fread($handle, filesize("scraper/brave-video.html"));
 		fclose($handle);*/
 		
-		preg_match(
-			'/const data = (\[{.*}\]);/',
-			$html,
-			$json
-		);
-		
-		if(!isset($json[1])){
-			
-			throw new Exception("Failed to get data object");
-		}
-		
-		$json =
-			$this->fuckhtml
-			->parseJsObject(
-				$json[1]
-			);
+		$this->fuckhtml->load($html);
+		$json = $this->get_js();
 		
 		foreach(
 			$json
