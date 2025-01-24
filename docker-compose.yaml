@@ -6,14 +6,15 @@ services:
     image: luuul/4get:latest
     restart: unless-stopped
     environment:
+      - FOURGET_PROTO=http
       - FOURGET_SERVER_NAME=4get.ca
+      - FOURGET_INSTANCES=https://4get.ca
 
     ports:
       - "80:80"
       - "443:443"
 
-    volumes:
-      - /etc/letsencrypt/live/domain.tld:/etc/4get/certs
-      # mount custom banners and captcha
-      - ./banners:/var/www/html/4get/banner
-      - ./captcha:/var/www/html/4get/data/captcha
+    # volumes:
+    # - /etc/letsencrypt/live/domain.tld:/etc/4get/certs # mount ssl
+    # - ./banners:/var/www/html/4get/banner # mount custom banners
+    # - ./captcha:/var/www/html/4get/data/captcha # mount captcha images
