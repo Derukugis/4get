@@ -403,7 +403,7 @@ class brave{
 			
 			$nextpage =
 				$this->fuckhtml
-				->getElementsByClassName("btn", "a");
+				->getElementsByClassName("button", "a");
 			
 			if(count($nextpage) !== 0){
 				
@@ -1777,42 +1777,57 @@ class brave{
 		
 		$nextpage =
 			$this->fuckhtml
-			->getElementsByClassName("btn", "a");
+			->getElementById(
+				"pagination",
+				"div"
+			);
 		
-		if(count($nextpage) !== 0){
+		if($nextpage){
+			
+			$this->fuckhtml->load($nextpage);
 			
 			$nextpage =
-				$nextpage[count($nextpage) - 1];
-			
-			if(
-				strtolower(
-					$this->fuckhtml
-					->getTextContent(
-						$nextpage
-					)
-				) == "next"
-			){
-				
-				preg_match(
-					'/offset=([0-9]+)/',
-					$this->fuckhtml->getTextContent($nextpage["attributes"]["href"]),
-					$nextpage
+				$this->fuckhtml
+				->getElementsByClassName(
+					"button",
+					"a"
 				);
+			
+			if(count($nextpage) !== 0){
 				
-				return
-					$this->backend->store(
-						json_encode(
-							[
-								"q" => $q,
-								"offset" => (int)$nextpage[1],
-								"nsfw" => $nsfw,
-								"country" => $country,
-								"spellcheck" => $spellcheck
-							]
-						),
-						$page,
-						$proxy
+				$nextpage =
+					$nextpage[count($nextpage) - 1];
+				
+				if(
+					strtolower(
+						$this->fuckhtml
+						->getTextContent(
+							$nextpage
+						)
+					) == "next"
+				){
+					
+					preg_match(
+						'/offset=([0-9]+)/',
+						$this->fuckhtml->getTextContent($nextpage["attributes"]["href"]),
+						$nextpage
 					);
+					
+					return
+						$this->backend->store(
+							json_encode(
+								[
+									"q" => $q,
+									"offset" => (int)$nextpage[1],
+									"nsfw" => $nsfw,
+									"country" => $country,
+									"spellcheck" => $spellcheck
+								]
+							),
+							$page,
+							$proxy
+						);
+				}
 			}
 		}
 		
