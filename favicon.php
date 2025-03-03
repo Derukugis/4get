@@ -15,7 +15,12 @@ class favicon{
 		
 		header("Content-Type: image/png");
 		
-		if(substr_count($url, "/") !== 2){
+		if(
+			preg_match(
+				'/^https?:\/\/[A-Za-z0-9.-]+$/',
+				$url
+			) === 0
+		){
 			
 			header("X-Error: Only provide the protocol and domain");
 			$this->defaulticon();
