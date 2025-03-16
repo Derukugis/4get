@@ -1,47 +1,44 @@
 :root{
-	--1d2021: #1d2021;
-	--282828: #282828;
-	--3c3836: #3c3836;
-	--504945: #504945;
-	
+	--1d2021:#1d2021;
+	--282828:#282828;
+	--3c3836:#3c3836;
+	--504945:#504945;
+
 	/* font */
-	--928374: #928374;
-	--a89984: #c9c5bf;
-	--bdae93: #bdae93;
-	--8ec07c: #8ec07c;
-	--ebdbb2: #ebdbb2;
+	--928374:#928374;
+	--a89984:#c9c5bf;
+	--bdae93:#bdae93;
+	--8ec07c:#8ec07c;
+	--ebdbb2:#ebdbb2;
 }
-
-
 
 body{
 	padding:15px 4% 40px;
 	margin:unset;
 }
 
-h1,h2,h3,h4,h5,h6{
+h1, h2, h3, h4, h5, h6{
 	padding:0;
 	margin:0 0 7px 0;
 	line-height:initial;
 	color:var(--bdae93);
 }
 
-h3,h4,h5,h6{
+h3, h4, h5, h6{
 	margin-bottom:14px;
 }
 
 /*
-	Web styles
+  Web styles
 */
 
 .searchbox input[type="submit"]{
 	float:right;
 	cursor:pointer;
 	padding:0 10px;
-  border-left: 1px solid var(--504945);
-  background: #723c0b;
+	border-left:1px solid var(--504945);
+	background:#723c0b;
 }
-
 
 .searchbox input{
 	all:unset;
@@ -97,7 +94,6 @@ h3,h4,h5,h6{
 	display:inline-block;
 }
 
-
 .tabs .tab.selected{
 	border-bottom:2px solid #fc92a5;
 }
@@ -107,7 +103,7 @@ h3,h4,h5,h6{
 	padding-bottom:12px;
 	padding-top:7px;
 	margin-bottom:7px;
-	background-color:#232525
+	background-color:#232525;
 }
 
 .filters .filter{
@@ -170,7 +166,6 @@ h3,h4,h5,h6{
 	font-size:12px;
 }
 
-
 .web .hover{
 	display:block;
 	text-decoration:none;
@@ -194,15 +189,12 @@ h3,h4,h5,h6{
 	color:#9760b1 !important;
 }
 
-
 .web .text-result .greentext{
 	font-size:14px;
 	color:var(--bdae93);
 }
 
-
 /* favicon */
-
 
 .favicon-dropdown a{
 	text-decoration:none;
@@ -212,17 +204,14 @@ h3,h4,h5,h6{
 	font-size:13px;
 }
 
-
-.web .favicon img,
-.favicon-dropdown img{
+.web .favicon img, .favicon-dropdown img{
 	margin:3px 7px 0 0;
 	height:16px;
 	font-size:12px;
-	line-height:16px;;
+	line-height:16px;
 	display:block;
 	text-align:left;
 }
-
 
 .web .sublinks{
 	padding:17px 10px;
@@ -230,21 +219,18 @@ h3,h4,h5,h6{
 	color:var(--#928374);
 }
 
-
 .web .text-result .sublinks:last-child{
 	padding-bottom:0;
 }
 
-
 /* Wikipedia head */
 .wiki-head{
 	padding:5px;
-	background-color: #322f2b
+	background-color:#322f2b;
 }
 
-
 /*
-	Images tab
+  Images tab
 */
 
 #images{
@@ -258,16 +244,13 @@ h3,h4,h5,h6{
 	float:left;
 }
 
-
-
 #images .image .title{
 	white-space:nowrap;
 	overflow:hidden;
 	margin-bottom:7px;
 	font-weight:bold;
-    color:var(--bdae93);
+	color:var(--bdae93);
 }
-
 
 #popup-status{
 	display:none;
@@ -281,43 +264,59 @@ h3,h4,h5,h6{
 }
 
 /*
-	Settings page
+  Settings page
 */
-
 
 .web .settings-submit a{
 	margin-right:17px;
 	color:#bdae93;
 }
 
+/*
+  Responsive image
+*/
+@media only screen and (max-width:1454px){
+	#images .image-wrapper{
+		width:25%;
+	}
+}
+
+@media only screen and (max-width:1161px){
+	#images .image-wrapper{
+		width:25%;
+	}
+}
+
+@media only screen and (max-width:750px){
+	#images .image-wrapper{
+		width:50%;
+	}
+}
+
+@media only screen and (max-width:450px){
+	#images .image-wrapper{
+		width:100%;
+	}
+}
 
 /*
-	Responsive image
+  Responsive design
 */
-@media only screen and (max-width: 1454px){ #images .image-wrapper{ width:25%; } }
-@media only screen and (max-width: 1161px){ #images .image-wrapper{ width:25%; } }
-@media only screen and (max-width: 750px){ #images .image-wrapper{ width:50%; } }
-@media only screen and (max-width: 450px){ #images .image-wrapper{ width:100%; } }
 
-
-/*
-	Responsive design
-*/
-@media only screen and (max-width: 1550px){
-	
-	
-	.web .left,
+@media only screen and (max-width:1550px){
+.web .left,
 	.searchbox{
 		width:60%;
 	}
-
 }
 
-@media only screen and (max-width: 1000px){
-
+@media only screen and (max-width:1100px){
+.web .left,
+	.searchbox{
+		width:100%;
+	}
 }
 
-    .type{
-    color:var(--bdae93);
-    }
+.type{
+	color:var(--bdae93);
 }
