@@ -285,6 +285,7 @@ class ddg{
 							"display" => "NSFW",
 							"option" => [
 								"yes" => "Yes",
+								"maybe" => "Maybe",
 								"no" => "No"
 							]
 						],
@@ -1345,7 +1346,7 @@ class ddg{
 				$get_filters["iaf"] = $filters;
 			}
 			
-			$nsfw = $get["nsfw"] == "yes" ? "-2" : "-1";
+			$nsfw = $get["nsfw"] == "yes" ? "-1" : "1";
 			$get_filters["kp"] = $nsfw;
 			
 			try{
@@ -1498,8 +1499,12 @@ class ddg{
 				"ia" => "videos"
 			];
 			
-			$nsfw = $get["nsfw"] == "yes" ? "-2" : "-1";
-			$get_filters["kp"] = $nsfw;
+			switch($get["nsfw"]){
+				
+				case "yes": $nsfw = "-2"; break;
+				case "maybe": $nsfw = "-1"; break;
+				case "no": $nsfw = "1"; break;
+			}
 			
 			$filters = [];
 			

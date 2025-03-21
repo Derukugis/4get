@@ -37,7 +37,7 @@ class yandex{
 			"Accept-Encoding: gzip",
 			"Accept-Language: en-US,en;q=0.5",
 			"DNT: 1",
-			"Cookie: yp=1716337604.sp.family%3A{$nsfw}#1685406411.szm.1:1920x1080:1920x999",
+			"Cookie: yp=" . (time() - 4000033) . ".szm.1:1920x1080:876x1000#" . time() . ".sp.family:" . $nsfw,
 			"Referer: https://yandex.com/images/search",
 			"Connection: keep-alive",
 			"Upgrade-Insecure-Requests: 1",
@@ -668,7 +668,6 @@ class yandex{
 		foreach($json["blocks"] as $block){
 			
 			$html .= $block["html"];
-			
 			// get next page
 			if(
 				isset($block["params"]["nextPageUrl"]) &&
