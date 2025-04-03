@@ -578,697 +578,6 @@ class google{
 	}
 	
 	
-	private function parsepage($html, $pagetype, $search, $proxy, $params){
-		
-		$out = [
-			"status" => "ok",
-			"spelling" => [
-				"type" => "no_correction",
-				"using" => null,
-				"correction" => null
-			],
-			"npt" => null,
-			"answer" => [],
-			"web" => [],
-			"image" => [],
-			"video" => [],
-			"news" => [],
-			"related" => []
-		];
-		
-		$this->fuckhtml->load($html);
-		
-		$this->detect_sorry();
-		
-		// parse all <style> tags
-		$this->parsestyles();
-		
-		// get javascript images
-		$this->scrape_dimg($html);
-		
-		// get html blobs
-		preg_match_all(
-			'/function\(\){window\.jsl\.dh\(\'([^\']+?)\',\'(.+?[^\'])\'\);/',
-			$html,
-			$blobs
-		);
-		
-		$this->blobs = [];
-		if(isset($blobs[1])){
-			
-			for($i=0; $i<count($blobs[1]); $i++){
-				
-				$this->blobs[$blobs[1][$i]] =
-					$this->fuckhtml
-					->parseJsString(
-						$blobs[2][$i]
-					);
-			}
-		}
-		
-		$this->scrape_imagearr($html);
-		
-		//
-		// load result column
-		//
-		
-		$result_div =
-			$this->fuckhtml
-			->getElementById(
-				"center_col",
-				"div"
-			);
-		
-		if($result_div === false){
-			
-			throw new Exception("Failed to grep result div");
-		}
-		
-		$this->fuckhtml->load($result_div);
-		
-		// important for later
-		$last_page = false;
-		
-		//
-		// Get text results
-		//
-		$results =
-			$this->fuckhtml
-			->getElementsByClassName(
-				"g",
-				"div"
-			);
-		
-		$this->skip_next = false;
-		
-		foreach($results as $result){
-			
-			if($this->skip_next){
-				
-				$this->skip_next = false;
-				continue;
-			}
-			
-			$this->fuckhtml->load($result);
-			
-			$web = [
-				"title" => null,
-				"description" => null,
-				"url" => null,
-				"date" => null,
-				"type" => "web",
-				"thumb" => [
-					"url" => null,
-					"ratio" => null
-				],
-				"sublink" => [],
-				"table" => []
-			];
-			
-			// Detect presence of sublinks
-			$g =
-				$this->fuckhtml
-				->getElementsByClassName(
-					"g",
-					"div"
-				);
-			
-			if(count($g) > 0){
-				
-				// skip on next iteration
-				$this->skip_next = true;
-			}
-			
-			// get title
-			$h3 =
-				$this->fuckhtml
-				->getElementsByTagName(
-					"h3"
-				);
-			
-			if(count($h3) === 0){
-				
-				continue;
-			}
-			
-			$web["title"] =
-				$this->titledots(
-					$this->fuckhtml
-					->getTextContent(
-						$h3[0]
-					)
-				);
-			
-			// get url
-			$as =
-				$this->fuckhtml
-				->getElementsByTagName(
-					"a"
-				);
-			
-			$web["url"] =
-				$this->unshiturl(
-					$as[0]
-					["attributes"]
-					["href"]
-				);
-			
-			if(
-				!preg_match(
-					'/^http/',
-					$web["url"]
-				)
-			){
-				
-				// skip if invalid url is found
-				continue;
-			}
-			
-			//
-			// get viewcount, time posted and follower count from <cite> tag
-			//
-			$cite =
-				$this->fuckhtml
-				->getElementsByTagName(
-					"cite"
-				);
-			
-			if(count($cite) !== 0){
-				
-				$this->fuckhtml->load($cite[0]);
-				
-				$spans =
-					$this->fuckhtml
-					->getElementsByTagName("span");
-				
-				if(count($spans) === 0){
-					
-					$cites =
-						explode(
-							"·",
-							$this->fuckhtml
-							->getTextContent(
-								$cite[0]
-							)
-						);
-					
-					foreach($cites as $cite){
-						
-						$cite = trim($cite);
-						
-						if(
-							preg_match(
-								'/(.+) (views|followers|likes)$/',
-								$cite,
-								$match
-							)
-						){
-							
-							$web["table"][ucfirst($match[2])] =
-								$match[1];
-						}elseif(
-							preg_match(
-								'/ago$/',
-								$cite
-							)
-						){
-							
-							$web["date"] =
-								strtotime($cite);
-						}
-					}
-				}
-				
-				// reset
-				$this->fuckhtml->load($result);
-			}
-			
-			//
-			// attempt to fetch description cleanly
-			//
-			$description =
-				$this->fuckhtml
-				->getElementsByAttributeValue(
-					"style",
-					"-webkit-line-clamp:2"
-				);
-			
-			if(count($description) !== 0){
-				
-				$web["description"] =
-					$this->titledots(
-						$this->fuckhtml
-						->getTextContent(
-							$description[0]
-						)
-					);
-			}else{
-				
-				// use ANOTHER method where the description is a header of the result
-				$description =
-					$this->fuckhtml
-					->getElementsByAttributeValue(
-						"data-attrid",
-						"wa:/description"
-					);
-				
-				if(count($description) !== 0){
-					
-					// get date off that shit
-					$date =
-						$this->fuckhtml
-						->getElementsByClassName(
-							$this->getstyle(
-								[
-									"font-size" => "12px",
-									"line-height" => "1.34",
-									"display" => "inline-block",
-									"font-family" => "google sans,arial,sans-serif",
-									"padding-right" => "0",
-									"white-space" => "nowrap"
-								]
-							),
-							"span"
-						);
-					
-					if(count($date) !== 0){
-						
-						$description[0]["innerHTML"] =
-							str_replace(
-								$date[0]["outerHTML"],
-								"",
-								$description[0]["innerHTML"]
-							);
-						
-						$web["date"] =
-							strtotime(
-								$this->fuckhtml
-								->getTextContent(
-									$date[0]
-								)
-							);
-					}
-					
-					$web["description"] =
-						$this->fuckhtml
-						->getTextContent(
-							$description[0]
-						);
-				}else{
-					
-					// Yes.. You guessed it, use ANOTHER method to get descriptions
-					// off youtube containers
-					$description =
-						$this->fuckhtml
-						->getElementsByClassName(
-							$this->getstyle(
-								[
-									"-webkit-box-orient" => "vertical",
-									"display" => "-webkit-box",
-									"font-size" => "14px",
-									"-webkit-line-clamp" => "2",
-									"line-height" => "22px",
-									"overflow" => "hidden",
-									"word-break" => "break-word",
-									"color" => "#4d5156"
-								]
-							),
-							"div"
-						);
-					
-					if(count($description) !== 0){
-						
-						// check for video duration
-						$duration =
-							$this->fuckhtml
-							->getElementsByClassName(
-								$this->getstyle(
-									[
-										"background-color" => "rgba(0,0,0,0.6)",
-										"color" => "#fff",
-										"fill" => "#fff"
-									]
-								),
-								"div"
-							);
-						
-						if(count($duration) !== 0){
-							
-							$web["table"]["Duration"] =
-								$this->fuckhtml
-								->getTextContent(
-									$duration[0]
-								);
-						}
-						
-						$web["description"] =
-							$this->titledots(
-								html_entity_decode(
-									$this->fuckhtml
-									->getTextContent(
-										$description[0]
-									)
-								)
-							);
-						
-						// get author + time posted
-						$info =
-							$this->fuckhtml
-							->getElementsByClassName(
-								$this->getstyle(
-									[
-										"color" => "var(" . $this->getcolorvar("#70757a") . ")",
-										"font-size" => "14px",
-										"line-height" => "20px",
-										"margin-top" => "12px"
-									]
-								),
-								"div"
-							);
-						
-						if(count($info) !== 0){
-							
-							$info =
-								explode(
-									"·",
-									$this->fuckhtml
-									->getTextContent(
-										$info[0]
-									)
-								);
-							
-							switch(count($info)){
-								
-								case 3:
-									$web["table"]["Author"] = trim($info[1]);
-									$web["date"] = strtotime(trim($info[2]));
-									break;
-								
-								case 2:
-									$web["date"] = strtotime(trim($info[1]));
-									break;
-							}
-						}
-					}
-				}
-			}
-			
-			//
-			// get categories of content within the search result
-			//
-			$cats =
-				$this->fuckhtml
-				->getElementsByAttributeName(
-					"data-sncf",
-					"div"
-				);
-			
-			foreach($cats as $cat){
-				
-				$this->fuckhtml->load($cat);
-				
-				// detect image category
-				$images =
-					$this->fuckhtml
-					->getElementsByTagName(
-						"img"
-					);
-				
-				if(count($images) !== 0){
-					
-					foreach($images as $image){
-						
-						if(isset($image["attributes"]["id"])){
-							// we found an image
-							
-							if(isset($image["attributes"]["width"])){
-								
-								$width = (int)$image["attributes"]["width"];
-								
-								if($width == 110){
-									
-									$ratio = "1:1";
-								}elseif($width > 110){
-									
-									$ratio = "16:9";
-								}else{
-									
-									$ratio = "9:16";
-								}
-							}else{
-								
-								$ratio = "1:1";
-							}
-							
-							$web["thumb"] = [
-								"url" => $this->getdimg($image["attributes"]["id"]),
-								"ratio" => $ratio
-							];
-							
-							continue 2;
-						}
-					}
-				}
-				
-				// Detect rating
-				$spans_unfiltered =
-					$this->fuckhtml
-					->getElementsByTagName(
-						"span"
-					);
-				
-				$spans =
-					$this->fuckhtml
-					->getElementsByAttributeName(
-						"aria-label",
-						$spans_unfiltered
-					);
-				
-				foreach($spans as $span){
-					
-					if(
-						preg_match(
-							'/^Rated/',
-							$span["attributes"]["aria-label"]
-						)
-					){
-						
-						// found rating
-						// scrape rating
-						preg_match(
-							'/([0-9.]+).*([0-9.]+)/',
-							$span["attributes"]["aria-label"],
-							$rating
-						);
-						
-						if(isset($rating[1])){
-							
-							$web["table"]["Rating"] =
-								$rating[1] . "/" . $rating[2];
-						}
-						
-						$has_seen_reviews = 0;
-						foreach($spans_unfiltered as $span_unfiltered){
-							
-							if(
-								preg_match(
-									'/([0-9,.]+) +([A-z]+)$/',
-									$this->fuckhtml
-									->getTextContent(
-										$span_unfiltered
-									),
-									$votes
-								)
-							){
-								
-								$has_seen_reviews++;
-								$web["table"][ucfirst($votes[2])] = $votes[1];
-								continue;
-							}
-							
-							$text =
-								$this->fuckhtml
-								->getTextContent(
-									$span_unfiltered
-								);
-							
-							if(
-								$text == "&nbsp;&nbsp;&nbsp;" ||
-								$text == ""
-							){
-								
-								break;
-							}
-							
-							switch($has_seen_reviews){
-								
-								case 1:
-									// scrape price
-									$web["table"]["Price"] = $text;
-									$has_seen_reviews++;
-									break;
-								
-								case 2:
-									// scrape platform
-									$web["table"]["Platform"] = $text;
-									$has_seen_reviews++;
-									break;
-								
-								case 3:
-									// Scrape type
-									$web["table"]["Medium"] = $text;
-									break;
-							}
-						}
-						
-						continue 2;
-					}
-				}
-				
-				// check if its an answer header
-				$answer_header =
-					$this->fuckhtml
-					->getElementsByClassName(
-						$this->getstyle(
-							[
-								"overflow" => "hidden",
-								"text-overflow" => "ellipsis"
-							]
-						),
-						"span"
-					);
-				
-				if(count($answer_header) !== 0){
-					
-					$link =
-						$this->fuckhtml
-						->getElementsByTagName(
-							"a"
-						);
-					
-					$cat["innerHTML"] =
-						str_replace(
-							$link[0]["outerHTML"],
-							"",
-							$cat["innerHTML"]
-						);
-					
-					continue;
-				}
-				
-				// we probed everything, assume this is the description
-				// if we didn't find one cleanly previously
-				if($web["description"] === null){
-					$web["description"] =
-						$this->titledots(
-							$this->fuckhtml
-							->getTextContent(
-								$cat
-							)
-						);
-				}
-			}
-			
-			// check if description contains date
-			$description = explode("—", $web["description"], 2);
-			
-			if(
-				count($description) === 2 &&
-				strlen($description[0]) <= 20
-			){
-				
-				$date = strtotime($description[0]);
-				
-				if($date !== false){
-					
-					$web["date"] = $date;
-					$web["description"] = ltrim($description[1]);
-				}
-			}
-			
-			// fetch youtube thumbnail
-			$thumbnail =
-				$this->fuckhtml
-				->getElementsByClassName(
-					$this->getstyle(
-						[
-							"border-radius" => "8px",
-							"height" => "fit-content",
-							"justify-content" => "center",
-							"margin-right" => "20px",
-							"margin-top" => "4px",
-							"position" => "relative",
-							"width" => "fit-content"
-						]
-					),
-					"div"
-				);
-			
-			if(count($thumbnail) !== 0){
-				
-				// load thumbnail container
-				$this->fuckhtml->load($thumbnail[0]);
-				
-				$image =
-					$this->fuckhtml
-					->getElementsByTagName(
-						"img"
-					);
-				
-				if(
-					count($image) !== 0 &&
-					isset($image[0]["attributes"]["id"])
-				){
-					
-					$web["thumb"] =	[
-						"url" =>
-							$this->unshit_thumb(
-								$this->getdimg(
-									$image[0]["attributes"]["id"]
-								)
-							),
-						"ratio" => "16:9"
-					];
-				}
-				
-				// reset
-				$this->fuckhtml->load($result);
-			}
-			
-			$out["web"][] = $web;
-		}
-		
-		// reset
-		$this->fuckhtml->load($result_div);
-		
-		//
-		// craft $npt token
-		//
-		if(
-			$last_page === false &&
-			count($out["web"]) !== 0
-		){
-			if(!isset($params["start"])){
-				
-				$params["start"] = 20;
-			}else{
-				
-				$params["start"] += 20;
-			}
-			
-			$out["npt"] =
-				$this->backend
-				->store(
-					json_encode($params),
-					$pagetype,
-					$proxy
-				);
-		}
-		
-		return $out;
-	}
-	
-	
 	private function scrape_dimg($html){
 		
 		// get images loaded through javascript
@@ -2554,8 +1863,6 @@ class google{
 			[$params, $proxy] = $this->backend->get($get["npt"], "video");
 			$params = json_decode($params, true);
 			
-			$search = $params["q"];
-			
 		}else{
 			$search = $get["s"];
 			$country = $get["country"];
@@ -2569,9 +1876,9 @@ class google{
 			
 			$params = [
 				"q" => $search,
-				"tbm" => "vid",
+				"udm" => "7",
 				"hl" => "en",
-				"num" => "20"
+				"num" => 20
 			];
 			
 			// country
@@ -2637,12 +1944,35 @@ class google{
 			throw new Exception("Failed to get HTML");
 		}
 		
-		//$html = file_get_contents("scraper/google.html");
+		if(!isset($params["start"])){
+			
+			$params["start"] = 0;
+		}
+		$params["start"] += 20;
 		
-		$response = $this->parsepage($html, "videos", $search, $proxy, $params);
+		$this->fuckhtml->load($html);
+		
+		//
+		// Parse web video page
+		//
+		$this->detect_sorry();
+		
+		// parse all <style> tags
+		$this->parsestyles();
+		
+		// get javascript images
+		$this->scrape_dimg($html);
+		
+		$this->scrape_imagearr($html);
+		
 		$out = [
 			"status" => "ok",
-			"npt" => $response["npt"],
+			"npt" =>
+				$this->backend->store(
+					json_encode($params),
+					"videos",
+					$proxy
+				),
 			"video" => [],
 			"author" => [],
 			"livestream" => [],
@@ -2650,21 +1980,192 @@ class google{
 			"reel" => []
 		];
 		
-		foreach($response["web"] as $result){
+		$search_div =
+			$this->fuckhtml
+			->getElementById(
+				"center_col"
+			);
+		
+		if($search_div === false){
+			
+			throw new Exception("Failed to grep search div");
+		}
+		
+		$this->fuckhtml->load($search_div);
+		
+		$results =
+			$this->fuckhtml
+			->getElementsByClassName(
+				$this->getstyle([
+					"margin" => "0px 0px 30px"
+				]),
+				"div"
+			);
+		
+		foreach($results as $result){
+			
+			$this->fuckhtml->load($result);
+			
+			$url =
+				$this->fuckhtml
+				->getElementsByTagName(
+					"a"
+				);
+			
+			if(count($url) === 0){
+				
+				// no url, weird, continue
+				continue;
+			}
+			
+			$title =
+				$this->fuckhtml
+				->getElementsByTagName(
+					"h3"
+				);
+			
+			if(count($title) === 0){
+				
+				// no title, weird, continue
+				continue;
+			}
+			
+			// get description
+			$description =
+				$this->fuckhtml
+				->getElementsByClassName(
+					$this->getstyle([
+						"-webkit-box-orient" => "vertical",
+						"display" => "-webkit-box",
+						"-webkit-line-clamp" => "2",
+						"overflow" => "hidden",
+						"word-break" => "break-word"
+					]),
+					"div"
+				);
+			
+			if(count($description) === 0){
+				
+				$description = null;
+			}else{
+				
+				$description =
+					html_entity_decode(
+						$this->titledots(
+							$this->fuckhtml
+							->getTextContent(
+								$description[0]
+							)
+						)
+					);
+			}
+			
+			// get author + date posted
+			$metadiv =
+				$this->fuckhtml
+				->getElementsByClassName(
+					$this->getstyle([
+						"margin-top" => "12px"
+					]),
+					"div"
+				);
+			
+			$author = null;
+			$date = null;
+			
+			if(count($metadiv) !== 0){
+				
+				$metadiv =
+					explode(
+						"·",
+						$this->fuckhtml
+						->getTextContent(
+							$metadiv[0]
+						)
+					);
+				
+				if(count($metadiv) === 3){
+					
+					$author = trim($metadiv[1]);
+					$date = strtotime(trim($metadiv[2]));
+				}elseif(count($metadiv) === 2){
+					
+					$author = trim($metadiv[0]);
+					$date = strtotime(trim($metadiv[1]));
+				}
+			}
+			
+			$thumb = [
+				"url" => null,
+				"ratio" => null
+			];
+			
+			$image =
+				$this->fuckhtml
+				->getElementsByTagName(
+					"img"
+				);
+			
+			$duration = null;
+			
+			if(
+				count($image) !== 0 &&
+				isset($image[0]["attributes"]["id"])
+			){
+				
+				$thumb = [
+					"url" => $this->getdimg($image[0]["attributes"]["id"]),
+					"ratio" => "16:9"
+				];
+				
+				// get duration
+				$duration =
+					$this->fuckhtml
+					->getElementsByClassName(
+						$this->getstyle([
+							"background-color" => "rgba(0,0,0,0.6)",
+							"color" => "#fff",
+							"fill" => "#fff"
+						])
+					);
+				
+				if(count($duration) !== 0){
+					
+					$duration =
+						$this->hms2int(
+							$this->fuckhtml
+							->getTextContent(
+								$duration[0]
+							));
+				}else{
+					
+					$duration = null;
+				}
+			}
 			
 			$out["video"][] = [
-				"title" => $result["title"],
-				"description" => $result["description"],
+				"title" =>
+					$this->titledots(
+						$this->fuckhtml
+						->getTextContent(
+							$title[0]
+						)
+					),
+				"description" => $description,
 				"author" => [
-					"name" => isset($result["table"]["Author"]) ? $result["table"]["Author"] : null,
+					"name" => $author,
 					"url" => null,
 					"avatar" => null
 				],
-				"date" => $result["date"],
-				"duration" => isset($result["table"]["Duration"]) ? $this->hms2int($result["table"]["Duration"]) : null,
+				"date" => $date,
+				"duration" => $duration,
 				"views" => null,
-				"thumb" => $result["thumb"],
-				"url" => $result["url"]
+				"thumb" => $thumb,
+				"url" =>
+					$this->fuckhtml
+					->getTextContent(
+						$url[0]["attributes"]["href"]
+					)
 			];
 		}
 		
