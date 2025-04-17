@@ -410,10 +410,7 @@ class qwant{
 					"thumb" =>
 						$answer["data"]["result"]["thumbnail"]["landscape"] == null ?
 						null :
-						$this->unshitimage(
-							$answer["data"]["result"]["thumbnail"]["landscape"],
-							false
-						),
+						$this->unshitimage($answer["data"]["result"]["thumbnail"]["landscape"]),
 					"table" => [],
 					"sublink" => []
 				];
@@ -770,7 +767,7 @@ class qwant{
 			}else{
 				
 				$thumb = [
-					"url" => $this->unshitimage($video["thumbnail"], false),
+					"url" => $this->unshitimage($video["thumbnail"]),
 					"ratio" => "16:9"
 				];
 			}
@@ -870,7 +867,7 @@ class qwant{
 			}else{
 				
 				$thumb = [
-					"url" => $this->unshitimage($news["media"][0]["pict_big"]["url"], false),
+					"url" => $this->unshitimage($news["media"][0]["pict_big"]["url"]),
 					"ratio" => "16:9"
 				];
 			}
@@ -920,18 +917,79 @@ class qwant{
 		return trim($text, ". ");
 	}
 	
-	private function unshitimage($url, $is_bing = true){
+	private function unshitimage($url){
 		
 		// https://s1.qwant.com/thumbr/0x0/8/d/f6de4deb2c2b12f55d8bdcaae576f9f62fd58a05ec0feeac117b354d1bf5c2/th.jpg?u=https%3A%2F%2Fwww.bing.com%2Fth%3Fid%3DOIP.vvDWsagzxjoKKP_rOqhwrQAAAA%26w%3D160%26h%3D160%26c%3D7%26pid%3D5.1&q=0&b=1&p=0&a=0
-		parse_str(parse_url($url)["query"], $parts);
+		// https://s2.qwant.com/thumbr/474x289/7/f/412d13b3fe3a03eb2b89633c8e88b609b7d0b93cdd9a5e52db3c663e41e65e/th.jpg?u=https%3A%2F%2Ftse.mm.bing.net%2Fth%3Fid%3DOIP.9Tm_Eo6m7V7ltN19mxduDgHaEh%26pid%3DApi&q=0&b=1&p=0&a=0
 		
-		if($is_bing){
-			$parse = parse_url($parts["u"]);
-			parse_str($parse["query"], $parts);
+		$image = parse_url($url);
+		
+		if(
+			!isset($image["host"]) ||
+			!isset($image["query"])
+		){
 			
-			return "https://" . $parse["host"] . "/th?id=" . urlencode($parts["id"]);
+			// cant do anything
+			return $url;
 		}
 		
-		return $parts["u"];
+		$id = null;
+		
+		if(
+			preg_match(
+				'/s[0-9]+\.qwant\.com$/',
+				$image["host"]
+			)
+		){
+			
+			parse_str($image["query"], $str);
+			
+			// we're being served a proxy URL
+			if(isset($str["u"])){
+				
+				$bing_url = $str["u"];
+			}else{
+				
+				// give up
+				return $url;
+			}
+		}
+		
+		// parse bing URL
+		$id = null;
+		$image = parse_url($bing_url);
+		
+		if(isset($image["query"])){
+			
+			parse_str($image["query"], $str);
+			
+			if(isset($str["id"])){
+				
+				$id = $str["id"];
+			}
+		}
+		
+		if($id === null){
+			
+			// fallback to getting ID from path
+			$id = explode("/", $image["path"]);
+		
+			for($i=count($id) - 1; $i>0; $i--){
+				
+				if(trim($id[$i]) != ""){
+					
+					$id = $id[$i];
+					break;
+				}
+			}
+		}
+		
+		if(is_array($id)){
+			
+			// fuck off, let proxy.php deal with it
+			return $url;
+		}
+		
+		return "https://" . $image["host"] . "/th/id/" . $id;
 	}
 }

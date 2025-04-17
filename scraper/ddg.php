@@ -1943,10 +1943,41 @@ class ddg{
 	
 	private function bingimg($url){
 		
-		$parse = parse_url($url);
-		parse_str($parse["query"], $parts);
+		$image = parse_url($url);
 		
-		return "https://" . $parse["host"] . "/th?id=" . urlencode($parts["id"]);
+		$id = null;
+		if(isset($image["query"])){
+			
+			parse_str($image["query"], $str);
+			
+			if(isset($str["id"])){
+				
+				$id = $str["id"];
+			}
+		}
+		
+		if($id === null){
+			
+			// fallback to getting ID from path
+			$id = explode("/", $image["path"]);
+		
+			for($i=count($id) - 1; $i>0; $i--){
+				
+				if(trim($id[$i]) != ""){
+					
+					$id = $id[$i];
+					break;
+				}
+			}
+		}
+		
+		if(is_array($id)){
+			
+			// fuck off, let proxy.php deal with it
+			return $url;
+		}
+		
+		return "https://" . $image["host"] . "/th/id/" . $id;
 	}
 	
 	private function bingratio($width, $height){

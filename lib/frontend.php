@@ -939,6 +939,7 @@ class frontend{
 						"brave" => "Brave",
 						"yandex" => "Yandex",
 						"google" => "Google",
+						//"google_api" => "Google API",
 						"google_cse" => "Google CSE",
 						"startpage" => "Startpage",
 						"qwant" => "Qwant",
@@ -970,10 +971,12 @@ class frontend{
 						"yep" => "Yep",
 						"solofield" => "Solofield",
 						"pinterest" => "Pinterest",
+						"flickr" => "Flickr",
 						"fivehpx" => "500px",
 						"vsco" => "VSCO",
 						"imgur" => "Imgur",
-						"ftm" => "FindThatMeme"
+						"ftm" => "FindThatMeme",
+						//"sankakucomplex" => "SankakuComplex"
 					]
 				];
 				break;

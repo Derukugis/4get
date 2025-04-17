@@ -34,36 +34,62 @@ try{
 		)
 	){
 		
-		if(
-			!isset($image["query"]) ||
-			!isset($image["path"]) ||
-			$image["path"] != "/th"
-		){
+		if(!isset($image["path"])){
 			
-			header("X-Error: Invalid bing image path");
+			header("X-Error: Missing bing image path");
 			$proxy->do404();
 			die();
 		}
 		
-		parse_str($image["query"], $str);
-		
-		if(!isset($str["id"])){
+		//
+		// get image ID
+		// formations:
+		// https://tse2.mm.bing.net/th/id/OIP.3yLBkUPn8EXA1wlhWP2BHwHaE3
+		// https://tse2.mm.bing.net/th?id=OIP.3yLBkUPn8EXA1wlhWP2BHwHaE3
+		//
+		$id = null;
+		if(isset($image["query"])){
 			
-			header("X-Error: Missing bing ID");
+			parse_str($image["query"], $str);
+			
+			if(isset($str["id"])){
+				
+				$id = $str["id"];
+			}
+		}
+		
+		if($id === null){
+			
+			// fallback to getting ID from path
+			$id = explode("/", $image["path"]);
+		
+			for($i=count($id) - 1; $i>0; $i--){
+				
+				if(trim($id[$i]) != ""){
+					
+					$id = $id[$i];
+					break;
+				}
+			}
+		}
+		
+		if(is_array($id)){
+			
+			header("X-Error: Missing bing id parameter");
 			$proxy->do404();
 			die();
 		}
 			
 		switch($_GET["s"]){
 			
-			case "portrait": $req = "&w=50&h=90&p=0&qlt=90"; break;
-			case "landscape": $req = "&w=160&h=90&p=0&qlt=90"; break;
-			case "square": $req = "&w=90&h=90&p=0&qlt=90"; break;
-			case "thumb": $req = "&w=236&h=180&p=0&qlt=90"; break;
-			case "cover": $req = "&w=207&h=270&p=0&qlt=90"; break;
+			case "portrait": $req = "?w=50&h=90&p=0&qlt=90"; break;
+			case "landscape": $req = "?w=160&h=90&p=0&qlt=90"; break;
+			case "square": $req = "?w=90&h=90&p=0&qlt=90"; break;
+			case "thumb": $req = "?w=236&h=180&p=0&qlt=90"; break;
+			case "cover": $req = "?w=207&h=270&p=0&qlt=90"; break;
 		}
 		
-		$proxy->stream_linear_image("https://" . $image["host"] . "/th?id=" . urlencode($str["id"]) . $req, "https://www.bing.com");
+		$proxy->stream_linear_image("https://" . $image["host"] . "/th/id/" . urlencode($id) . $req, "https://www.bing.com");
 		die();
 	}
 	
