@@ -129,6 +129,7 @@ class config{
 	const PROXY_BRAVE = false;
 	const PROXY_FB = false; // facebook
 	const PROXY_GOOGLE = false;
+	const PROXY_GOOGLE_API = false;
 	const PROXY_GOOGLE_CSE = false;
 	const PROXY_STARTPAGE = false;
 	const PROXY_QWANT = false;
@@ -143,6 +144,8 @@ class config{
 	const PROXY_YT = false; // youtube
 	const PROXY_YEP = false;
 	const PROXY_PINTEREST = false;
+	const PROXY_SANKAKUCOMPLEX = false;
+	const PROXY_FLICKR = false;
 	const PROXY_FIVEHPX = false;
 	const PROXY_VSCO = false;
 	const PROXY_SEZNAM = false;
@@ -160,7 +163,7 @@ class config{
 	// Scraper-specific parameters
 	//
 	
-	// GOOGLE CSE
+	// GOOGLE CSE & GOOGLE API
 	const GOOGLE_CX_ENDPOINT = "d4e68b99b876541f0";
 	
 	// MARGINALIA
