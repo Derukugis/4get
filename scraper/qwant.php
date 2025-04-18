@@ -971,17 +971,15 @@ class qwant{
 		
 		if($id === null){
 			
-			// fallback to getting ID from path
-			$id = explode("/", $image["path"]);
-		
-			for($i=count($id) - 1; $i>0; $i--){
+			$id = explode("/th/id/", $image["path"], 2);
+			
+			if(count($id) !== 2){
 				
-				if(trim($id[$i]) != ""){
-					
-					$id = $id[$i];
-					break;
-				}
+				// malformed
+				return $url;
 			}
+			
+			$id = $id[1];
 		}
 		
 		if(is_array($id)){

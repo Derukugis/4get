@@ -1958,23 +1958,15 @@ class ddg{
 		
 		if($id === null){
 			
-			// fallback to getting ID from path
-			$id = explode("/", $image["path"]);
-		
-			for($i=count($id) - 1; $i>0; $i--){
-				
-				if(trim($id[$i]) != ""){
-					
-					$id = $id[$i];
-					break;
-				}
-			}
-		}
-		
-		if(is_array($id)){
+			$id = explode("/th/id/", $image["path"], 2);
 			
-			// fuck off, let proxy.php deal with it
-			return $url;
+			if(count($id) !== 2){
+				
+				// malformed
+				return $url;
+			}
+			
+			$id = $id[1];
 		}
 		
 		return "https://" . $image["host"] . "/th/id/" . $id;
