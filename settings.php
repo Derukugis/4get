@@ -232,6 +232,10 @@ $settings = [
 						"text" => "Pinterest"
 					],
 					[
+						"value" => "flickr",
+						"text" => "Flickr"
+					],
+					[
 						"value" => "fivehpx",
 						"text" => "500px"
 					],
