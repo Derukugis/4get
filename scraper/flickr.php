@@ -236,6 +236,13 @@ class flickr{
 				
 				$filters["license"] = $get["license"];
 			}
+			
+			switch($get["nsfw"]){
+				
+				case "yes": $filters["safe_search"] = 0; break;
+				case "maybe": $filters["safe_search"] = 2; break;
+				case "no": $filters["safe_search"] = 1; break;
+			}
 		}
 		
 		$get_params = [
