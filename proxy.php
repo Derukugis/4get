@@ -87,7 +87,7 @@ try{
 			case "cover": $req = "?w=207&h=270&p=0&qlt=90"; break;
 		}
 		
-		$proxy->stream_linear_image("https://" . $image["host"] . "/th/id/" . urlencode($id) . $req, "https://www.bing.com");
+		$proxy->stream_linear_image("https://" . $image["host"] . "/th?id=" . rawurlencode($id) . $req, "https://www.bing.com");
 		die();
 	}
 	

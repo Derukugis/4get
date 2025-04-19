@@ -1969,7 +1969,7 @@ class ddg{
 			$id = $id[1];
 		}
 		
-		return "https://" . $image["host"] . "/th/id/" . $id;
+		return "https://" . $image["host"] . "/th?id=" . rawurlencode($id);
 	}
 	
 	private function bingratio($width, $height){

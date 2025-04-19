@@ -988,6 +988,6 @@ class qwant{
 			return $url;
 		}
 		
-		return "https://" . $image["host"] . "/th/id/" . $id;
+		return "https://" . $image["host"] . "/th?id=" . rawurlencode($id);
 	}
 }
