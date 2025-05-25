@@ -1226,7 +1226,12 @@ class startpage{
 		// get results
 		foreach($json["render"]["presenter"]["regions"]["mainline"] as $category){
 			
-			if($category["display_type"] == "video-youtube"){
+			if(
+				preg_match(
+					'/^video-/i',
+					$category["display_type"]
+				)
+			){
 				
 				foreach($category["results"] as $video){
 					
@@ -1248,7 +1253,7 @@ class startpage{
 					}
 					
 					$out["video"][] = [
-						"title" => $video["title"],
+						"title" => str_replace(["", ""], "", $video["title"]),
 						"description" => $this->limitstrlen($video["description"]),
 						"author" => [
 							"name" => $video["channelTitle"],
@@ -1256,7 +1261,7 @@ class startpage{
 							"avatar" => null
 						],
 						"date" => strtotime($video["publishDate"]),
-						"duration" => $this->hms2int($video["duration"]),
+						"duration" => $this->hms2int($category["display_type"] == "video-youtube" ? $video["duration"] : $video["duration"] / 1000),
 						"views" => (int)$video["viewCount"],
 						"thumb" => $thumb,
 						"url" => $video["clickUrl"]
