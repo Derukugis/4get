@@ -182,6 +182,23 @@ class imgur{
 			throw new Exception("Failed to fetch HTML");
 		}
 		
+		$json = json_decode($html, true);
+		
+		if($json){
+			
+			// {"data":{"error":"Imgur is temporarily over capacity. Please try again later."},"success":false,"status":403}
+			
+			if(isset($json["data"]["error"])){
+				
+				if(stripos($json["data"]["error"], "capacity")){
+					
+					throw new Exception("Imgur IP blocked this 4get instance or request proxy. Try again");
+				}
+			}
+			
+			throw new Exception("Imgur returned an unknown error (IP ban?)");
+		}
+		
 		$this->fuckhtml->load($html);
 		
 		$posts =
@@ -197,7 +214,14 @@ class imgur{
 			
 			$image =
 				$this->fuckhtml
-				->getElementsByTagName("img")[0];
+				->getElementsByTagName("img");
+			
+			if(count($image) === 0){
+				
+				continue;
+			}
+			
+			$image = $image[0];
 			
 			$image_url = "https:" . substr($this->fuckhtml->getTextContent($image["attributes"]["src"]), 0, -5);
 			
