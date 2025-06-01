@@ -634,7 +634,7 @@ class google{
 	private function scrape_imagearr($html){
 		// get image links arrays
 		preg_match_all(
-			'/\[0,"([^"]+)",\["([^"]+)\",([0-9]+),([0-9]+)\],\["([^"]+)",([0-9]+),([0-9]+)\]/',
+			'/\[[0-9]+,"([^"]+)",\["([^"]+)\",([0-9]+),([0-9]+)\],\["([^"]+)",([0-9]+),([0-9]+)\]/',
 			$html,
 			$image_arr
 		);
@@ -644,14 +644,41 @@ class google{
 			
 			for($i=0; $i<count($image_arr[1]); $i++){
 				
+				$original =
+					$this->fuckhtml
+					->parseJsString(
+						$image_arr[5][$i]
+					);
+				
+				if(
+					preg_match(
+						'/^x-raw-image/',
+						$original
+					)
+				){
+					
+					// only add thumbnail, google doesnt have OG resolution
+					$this->image_arr[$image_arr[1][$i]] = [
+						[
+							"url" =>
+								$this->unshit_thumb(
+									$this->fuckhtml
+									->parseJsString(
+										$image_arr[2][$i]
+									)
+								),
+							"width" => (int)$image_arr[7][$i], // pass the OG image width & height
+							"height" => (int)$image_arr[6][$i]
+						]
+					];
+					
+					continue;
+				}
+				
 				$this->image_arr[$image_arr[1][$i]] =
 					[
 						[
-							"url" =>
-								$this->fuckhtml
-								->parseJsString(
-									$image_arr[5][$i]
-								),
+							"url" => $original,
 							"width" => (int)$image_arr[7][$i],
 							"height" => (int)$image_arr[6][$i]
 						],
@@ -2635,8 +2662,8 @@ class google{
 			}
 		}
 		/*
-		$handle = fopen("scraper/google-img.html", "r");
-		$html = fread($handle, filesize("scraper/google-img.html"));
+		$handle = fopen("scraper/page.html", "r");
+		$html = fread($handle, filesize("scraper/page.html"));
 		fclose($handle);*/
 		
 		try{
@@ -2679,6 +2706,21 @@ class google{
 				$this->fuckhtml
 				->getElementsByTagName("img")[0];
 			
+			// make sure we dont attempt to show an image we dont have data for
+			if(
+				isset($div["attributes"]["data-docid"]) &&
+				isset($this->image_arr[$div["attributes"]["data-docid"]])
+			){
+				
+				$source =
+					$this->image_arr[
+						$div["attributes"]["data-docid"]
+					];
+			}else{
+				
+				continue;
+			}
+			
 			$out["image"][] = [
 				"title" =>
 					$this->titledots(
@@ -2687,10 +2729,7 @@ class google{
 							$image["attributes"]["alt"]
 						)
 					),
-				"source" =>
-					$this->image_arr[
-						$div["attributes"]["data-docid"]
-					],
+				"source" => $source,
 				"url" =>
 					$this->fuckhtml
 					->getTextContent(
