@@ -2973,14 +2973,14 @@ class google{
 	
 	private function detect_sorry(){
 		
-		$recaptcha =
+		$captcha_form =
 			$this->fuckhtml
 			->getElementById(
-				"recaptcha",
-				"div"
+				"captcha-form",
+				"form"
 			);
 		
-		if($recaptcha !== false){
+		if($captcha_form !== false){
 			
 			throw new Exception("Google returned a captcha");
 		}
